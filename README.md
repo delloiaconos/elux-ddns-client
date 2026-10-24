@@ -8,19 +8,25 @@ make id
 
 Copy the UUID and ask the DNS administrator to associate it with the desired hostname in `/etc/sftdyn/clientlist`.
 
-```sh
-make job
-```
+Choose one of the scheduling methods. The default endpoint is `https://ns1-elux.ing.unibs.it:4443`; override it with the `ENDPOINT` environment variable.
 
-Installs an update every 5 minutes in the current user's crontab. The default endpoint is `https://ns1-elux.ing.unibs.it:4443`; override it with the `ENDPOINT` environment variable:
+Install a cron job in the current user's crontab:
 
 ```sh
-ENDPOINT=https://dns.example.it:4443 make job
+ENDPOINT=https://dns.example.it:4443 make cron-job
 ```
 
-`make id` saves the UUID in `.host_uuid`. `make job` generates `dyn-update.sh` with the endpoint and UUID embedded in the script; both files are local to the client.
+Or install and enable the system-wide systemd timer (requires `sudo`):
 
-Run `make test` to verify that the `crontab` command is installed and the `cron` or `crond` systemd service is active. The check does not modify the crontab.
+```sh
+ENDPOINT=https://dns.example.it:4443 make system-job
+```
+
+The systemd mode installs the update script in `/usr/local/bin` and the service and timer units in `/etc/systemd/system`.
+
+Both methods run every 5 minutes. `make id` saves the UUID in `.host_uuid`; the generated update script embeds the selected endpoint and UUID.
+
+For cron mode, run `make test` to verify that the `crontab` command is installed and the `cron` or `crond` systemd service is active. It does not modify the crontab.
 
 ## License
 

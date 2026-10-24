@@ -1,0 +1,11 @@
+[Unit]
+Description=Update Elux dynamic DNS record every five minutes
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+AccuracySec=15s
+Unit=elux-ddns.service
+
+[Install]
+WantedBy=timers.target
