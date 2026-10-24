@@ -7,6 +7,12 @@ SERVICE_NAME := elux-ddns
 SCRIPT_NAME := $(SERVICE_NAME)-update.sh
 SCRIPT_PATH := /usr/local/bin
 SYSTEMD_UNIT_DIR := /etc/systemd/system
+
+GENERATED_FILES := $(TEMP_DIR)/$(SCRIPT_NAME) \
+	$(TEMP_DIR)/$(SERVICE_NAME).service \
+	$(TEMP_DIR)/$(SERVICE_NAME).timer
+TEMPLATE_FILES := elux-ddns-update.sh.in elux-ddns.service.in elux-ddns.timer.in
+
 export SERVICE_NAME SCRIPT_PATH SCRIPT_NAME ENDPOINT
 
 .PHONY: id cron-job system-job update uninstall clean test
@@ -15,7 +21,9 @@ id:
 	@cat /proc/sys/kernel/random/uuid | tee "$(UUID_FILE)"
 	@chmod 600 "$(UUID_FILE)"
 
-update: elux-ddns-update.sh.in elux-ddns.service.in elux-ddns.timer.in
+update: $(GENERATED_FILES)
+
+$(GENERATED_FILES) &: $(TEMPLATE_FILES) $(UUID_FILE)
 	@test -s "$(UUID_FILE)" || { echo "Run 'make id' first." >&2; exit 1; }
 	@mkdir -p "$(TEMP_DIR)"
 	@UUID=$$(cat "$(UUID_FILE)") \

@@ -2,7 +2,7 @@
 
 Minimal client that updates a DNS record managed by sftdyn every 5 minutes, using cron or a systemd timer.
 
-Requires `make`, `wget`, and `envsubst` (GNU gettext), plus cron or systemd for scheduling.
+Requires GNU Make 4.3 or later, `wget`, and `envsubst` (GNU gettext), plus cron or systemd for scheduling.
 
 Generate a host identifier:
 
