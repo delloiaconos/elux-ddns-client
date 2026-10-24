@@ -24,7 +24,7 @@ Or install and enable the system-wide systemd timer (requires `sudo`):
 make system-job
 ```
 
-The script is saved in `/usr/local/bin` by default. This directory must be writable; use `make SCRIPT_PATH=/path/to/bin cron-job` to choose another location.
+`make update` generates the script and systemd units in `temp/`. Both scheduling commands run this step automatically, then move the required files into place. The script destination is `/usr/local/bin` by default; use `SCRIPT_PATH=/path/to/bin` to change it. For cron installation, this directory must be writable by the current user.
 
 The default endpoint is `https://dns.example.it:4443`. To use a different server:
 
@@ -36,7 +36,7 @@ Run `make test` for a PASS/FAIL report on dependencies and scheduling. Checks fo
 
 Run `make uninstall` to remove the cron job, systemd units, and update script. Use the same path and name overrides as during installation. The host UUID is preserved.
 
-Run `make clean` to remove locally generated scripts and units, preserving templates and the host UUID.
+Run `make clean` to remove generated files from `temp/`, preserving installed files, templates, and the host UUID.
 
 ## License
 

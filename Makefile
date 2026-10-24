@@ -2,39 +2,41 @@ ENDPOINT ?= https://dns.example.it:4443
 UUID_FILE ?= .host_uuid
 ENVSUBST ?= envsubst
 
+TEMP_DIR ?= temp
 SERVICE_NAME := elux-ddns
 SCRIPT_NAME := $(SERVICE_NAME)-update.sh
 SCRIPT_PATH := /usr/local/bin
 SYSTEMD_UNIT_DIR := /etc/systemd/system
 export SERVICE_NAME SCRIPT_PATH SCRIPT_NAME ENDPOINT
 
-.PHONY: id cron-job system-job update update-script update-units uninstall clean test
+.PHONY: id cron-job system-job update uninstall clean test
 
 id:
 	@cat /proc/sys/kernel/random/uuid | tee "$(UUID_FILE)"
 	@chmod 600 "$(UUID_FILE)"
 
-update: update-script update-units
-
-update-script: elux-ddns-update.sh.in
+update: elux-ddns-update.sh.in elux-ddns.service.in elux-ddns.timer.in
 	@test -s "$(UUID_FILE)" || { echo "Run 'make id' first." >&2; exit 1; }
-	@mkdir -p "$(SCRIPT_PATH)"
+	@mkdir -p "$(TEMP_DIR)"
 	@UUID=$$(cat "$(UUID_FILE)") \
-	$(ENVSUBST) '$${ENDPOINT} $${UUID}' < "$<" > "$(SCRIPT_PATH)/$(SCRIPT_NAME)"
-	@chmod 700 "$(SCRIPT_PATH)/$(SCRIPT_NAME)"
+	$(ENVSUBST) '$${ENDPOINT} $${UUID}' < elux-ddns-update.sh.in > "$(TEMP_DIR)/$(SCRIPT_NAME)"
+	@chmod 700 "$(TEMP_DIR)/$(SCRIPT_NAME)"
+	@$(ENVSUBST) '$${SCRIPT_PATH} $${SCRIPT_NAME}' < elux-ddns.service.in > "$(TEMP_DIR)/$(SERVICE_NAME).service"
+	@$(ENVSUBST) '$${SERVICE_NAME}' < elux-ddns.timer.in > "$(TEMP_DIR)/$(SERVICE_NAME).timer"
+	@chmod 644 "$(TEMP_DIR)/$(SERVICE_NAME).service" "$(TEMP_DIR)/$(SERVICE_NAME).timer"
 
-update-units: elux-ddns.service.in elux-ddns.timer.in
-	@$(ENVSUBST) '$${SCRIPT_PATH} $${SCRIPT_NAME}' < elux-ddns.service.in > "$(SERVICE_NAME).service"
-	@$(ENVSUBST) '$${SERVICE_NAME}' < elux-ddns.timer.in > "$(SERVICE_NAME).timer"
-
-cron-job: update-script
+cron-job: update
+	@mkdir -p "$(SCRIPT_PATH)"
+	@mv -- "$(TEMP_DIR)/$(SCRIPT_NAME)" "$(SCRIPT_PATH)/$(SCRIPT_NAME)"
 	@(crontab -l 2>/dev/null | grep -vF '$(SERVICE_NAME)' || true; \
 	  echo '*/5 * * * * "$(SCRIPT_PATH)/$(SCRIPT_NAME)" # $(SERVICE_NAME)') | crontab -
 	@echo "Cron job installed: every 5 minutes"
 
 system-job: update
-	@sudo install -m 644 "$(SERVICE_NAME).service" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).service"
-	@sudo install -m 644 "$(SERVICE_NAME).timer" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).timer"
+	@sudo mkdir -p "$(SCRIPT_PATH)" "$(SYSTEMD_UNIT_DIR)"
+	@sudo mv -- "$(TEMP_DIR)/$(SCRIPT_NAME)" "$(SCRIPT_PATH)/$(SCRIPT_NAME)"
+	@sudo mv -- "$(TEMP_DIR)/$(SERVICE_NAME).service" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).service"
+	@sudo mv -- "$(TEMP_DIR)/$(SERVICE_NAME).timer" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).timer"
 	@sudo systemctl daemon-reload
 	@sudo systemctl enable --now "$(SERVICE_NAME).timer"
 	@echo "Systemd timer installed and activated: every 5 minutes"
@@ -51,11 +53,12 @@ uninstall:
 	@sudo systemctl daemon-reload 2>/dev/null || true
 	@rm -f -- "$(SCRIPT_PATH)/$(SCRIPT_NAME)" 2>/dev/null || \
 	  sudo rm -f -- "$(SCRIPT_PATH)/$(SCRIPT_NAME)" 2>/dev/null || true
-	@rm -f -- "$(SERVICE_NAME).service" "$(SERVICE_NAME).timer" 2>/dev/null || true
+	@rm -f -- "$(TEMP_DIR)/$(SCRIPT_NAME)" "$(TEMP_DIR)/$(SERVICE_NAME).service" "$(TEMP_DIR)/$(SERVICE_NAME).timer" 2>/dev/null || true
 	@echo "Uninstall completed"
 
 clean:
-	@rm -f -- "$(SCRIPT_NAME)" "$(SERVICE_NAME).service" "$(SERVICE_NAME).timer"
+	@rm -f -- "$(TEMP_DIR)/$(SCRIPT_NAME)" "$(TEMP_DIR)/$(SERVICE_NAME).service" "$(TEMP_DIR)/$(SERVICE_NAME).timer"
+	@rmdir -- "$(TEMP_DIR)" 2>/dev/null || true
 	@echo "Local generated files removed"
 
 test:
