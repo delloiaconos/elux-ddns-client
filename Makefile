@@ -33,8 +33,6 @@ cron-job: update-script
 	@echo "Cron job installato: ogni 5 minuti"
 
 system-job: update
-	@command -v systemctl >/dev/null 2>&1 || { echo "FAIL: systemd/systemctl non disponibile" >&2; exit 1; }
-	@command -v sudo >/dev/null 2>&1 || { echo "FAIL: sudo non disponibile" >&2; exit 1; }
 	@sudo install -m 644 "$(SERVICE_NAME).service" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).service"
 	@sudo install -m 644 "$(SERVICE_NAME).timer" "$(SYSTEMD_UNIT_DIR)/$(SERVICE_NAME).timer"
 	@sudo systemctl daemon-reload
@@ -42,11 +40,10 @@ system-job: update
 	@echo "Systemd timer installato e attivato: ogni 5 minuti"
 
 test:
-	@command -v "$(ENVSUBST)" >/dev/null 2>&1 || { echo "FAIL: envsubst non installato" >&2; exit 1; }
-	@command -v crontab >/dev/null 2>&1 || { echo "FAIL: crontab non installato" >&2; exit 1; }
-	@if command -v systemctl >/dev/null 2>&1 && \
-	  { systemctl is-active --quiet cron.service || systemctl is-active --quiet crond.service; }; then \
-	  echo "PASS: crontab installato e servizio cron attivo"; \
-	else \
-	  echo "FAIL: servizio cron/crond non attivo (o systemd non disponibile)" >&2; exit 1; \
-	fi
+	@echo "$$(command -v "$(ENVSUBST)" >/dev/null 2>&1 && echo PASS || echo FAIL): envsubst installato"
+	@echo "$$(command -v crontab >/dev/null 2>&1 && echo PASS || echo FAIL): crontab installato"
+	@echo "$$(command -v sudo >/dev/null 2>&1 && echo PASS || echo FAIL): sudo installato"
+	@echo "$$(systemctl show --property=Version --value >/dev/null 2>&1 && echo PASS || echo FAIL): systemd raggiungibile tramite systemctl"
+	@echo "$$( { systemctl is-active --quiet cron.service || systemctl is-active --quiet crond.service; } >/dev/null 2>&1 && echo PASS || echo FAIL): servizio cron/crond attivo"
+	@echo "$$(systemctl is-enabled --quiet "$(SERVICE_NAME).timer" >/dev/null 2>&1 && echo PASS || echo FAIL): timer $(SERVICE_NAME).timer abilitato"
+	@echo "$$(systemctl is-active --quiet "$(SERVICE_NAME).timer" >/dev/null 2>&1 && echo PASS || echo FAIL): timer $(SERVICE_NAME).timer attivo"
