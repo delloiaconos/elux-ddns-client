@@ -20,6 +20,8 @@ ENDPOINT=https://dns.example.it:4443 make job
 
 `make id` saves the UUID in `.host_uuid`. `make job` generates `dyn-update.sh` with the endpoint and UUID embedded in the script; both files are local to the client.
 
+Run `make test` to verify that the `crontab` command is installed and the `cron` or `crond` systemd service is active. The check does not modify the crontab.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
