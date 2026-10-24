@@ -1,4 +1,4 @@
-# sftdyn client
+# Elux Dynamic DNS Client Scripts
 
 Minimal client that updates a DNS record managed by sftdyn every 5 minutes, using cron or a systemd timer.
 
@@ -26,10 +26,10 @@ make system-job
 
 The script is saved in `/usr/local/bin` by default. This directory must be writable; use `make SCRIPT_PATH=/path/to/bin cron-job` to choose another location.
 
-The default endpoint is `https://ns1-elux.ing.unibs.it:4443`. To use a different server:
+The default endpoint is `https://dns.example.it:4443`. To use a different server:
 
 ```sh
-ENDPOINT=https://dns.example.it:4443 make cron-job
+ENDPOINT=https://ns1-elux.ing.unibs.it:4443 make cron-job
 ```
 
 Run `make test` for a PASS/FAIL report on dependencies and scheduling. Checks for the unused scheduling method may report FAIL; the command always exits successfully.
