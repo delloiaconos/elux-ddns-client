@@ -5,4 +5,4 @@ After=network-online.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/elux-ddns-update
+ExecStart=/usr/local/bin/elux-ddns-update.sh

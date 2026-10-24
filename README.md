@@ -22,7 +22,7 @@ Or install and enable the system-wide systemd timer (requires `sudo`):
 ENDPOINT=https://dns.example.it:4443 make system-job
 ```
 
-The systemd mode installs the update script in `/usr/local/bin` and the service and timer units in `/etc/systemd/system`.
+Both modes save the update script in `$(SCRIPT_PATH)/$(SCRIPT_NAME)` (by default `/usr/local/bin/elux-ddns-update.sh`). The script directory must be writable by the user running make; override it with `make SCRIPT_PATH=/path/to/bin` if needed. The systemd mode also installs the service and timer units in `/etc/systemd/system`.
 
 Both methods run every 5 minutes. `make id` saves the UUID in `.host_uuid`; the generated update script embeds the selected endpoint and UUID.
 
