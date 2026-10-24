@@ -1,12 +1,11 @@
 ENDPOINT ?= https://dns.example.it:4443
-UUID_FILE ?= .host_uuid
-ENVSUBST ?= envsubst
 
-TEMP_DIR ?= temp
 SERVICE_NAME := elux-ddns
 SCRIPT_NAME := $(SERVICE_NAME)-update.sh
 SCRIPT_PATH := /usr/local/bin
 SYSTEMD_UNIT_DIR := /etc/systemd/system
+UUID_FILE ?= .host_uuid
+TEMP_DIR ?= temp
 
 GENERATED_FILES := $(TEMP_DIR)/$(SCRIPT_NAME) \
 	$(TEMP_DIR)/$(SERVICE_NAME).service \
@@ -26,11 +25,10 @@ update: $(GENERATED_FILES)
 $(GENERATED_FILES) &: $(TEMPLATE_FILES) $(UUID_FILE)
 	@test -s "$(UUID_FILE)" || { echo "Run 'make id' first." >&2; exit 1; }
 	@mkdir -p "$(TEMP_DIR)"
-	@UUID=$$(cat "$(UUID_FILE)") \
-	$(ENVSUBST) '$${ENDPOINT} $${UUID}' < elux-ddns-update.sh.in > "$(TEMP_DIR)/$(SCRIPT_NAME)"
+	@UUID=$$(cat "$(UUID_FILE)") envsubst '$${ENDPOINT} $${UUID}' < elux-ddns-update.sh.in > "$(TEMP_DIR)/$(SCRIPT_NAME)"
 	@chmod 700 "$(TEMP_DIR)/$(SCRIPT_NAME)"
-	@$(ENVSUBST) '$${SCRIPT_PATH} $${SCRIPT_NAME}' < elux-ddns.service.in > "$(TEMP_DIR)/$(SERVICE_NAME).service"
-	@$(ENVSUBST) '$${SERVICE_NAME}' < elux-ddns.timer.in > "$(TEMP_DIR)/$(SERVICE_NAME).timer"
+	@envsubst '$${SCRIPT_PATH} $${SCRIPT_NAME}' < elux-ddns.service.in > "$(TEMP_DIR)/$(SERVICE_NAME).service"
+	@envsubst '$${SERVICE_NAME}' < elux-ddns.timer.in > "$(TEMP_DIR)/$(SERVICE_NAME).timer"
 	@chmod 644 "$(TEMP_DIR)/$(SERVICE_NAME).service" "$(TEMP_DIR)/$(SERVICE_NAME).timer"
 
 cron-job: update
@@ -70,7 +68,7 @@ clean:
 	@echo "Local generated files removed"
 
 test:
-	@echo "$$(command -v "$(ENVSUBST)" >/dev/null 2>&1 && echo PASS || echo FAIL): envsubst installed"
+	@echo "$$(command -v envsubst >/dev/null 2>&1 && echo PASS || echo FAIL): envsubst installed"
 	@echo "$$(command -v crontab >/dev/null 2>&1 && echo PASS || echo FAIL): crontab installed"
 	@echo "$$(command -v sudo >/dev/null 2>&1 && echo PASS || echo FAIL): sudo installed"
 	@echo "$$(systemctl show --property=Version --value >/dev/null 2>&1 && echo PASS || echo FAIL): systemd reachable through systemctl"
