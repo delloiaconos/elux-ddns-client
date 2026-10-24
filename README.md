@@ -34,6 +34,10 @@ ENDPOINT=https://ns1-elux.ing.unibs.it:4443 make cron-job
 
 Run `make test` for a PASS/FAIL report on dependencies and scheduling. Checks for the unused scheduling method may report FAIL; the command always exits successfully.
 
+Run `make uninstall` to remove the cron job, systemd units, and update script. Use the same path and name overrides as during installation. The host UUID is preserved.
+
+Run `make clean` to remove locally generated scripts and units, preserving templates and the host UUID.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
